@@ -13,6 +13,7 @@ import 'package:google_directions_api/google_directions_api.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   DirectionsService.init('AIzaSyA1teKX_ZHoJRmJZRJdof-fF3uNrQM-u50');
 
   runApp(const MyApp());
@@ -46,77 +47,11 @@ class IndexPage extends StatefulWidget {
 class _IndexPageState extends State<IndexPage> {
   // Funcion para desplegar dialogo de ingreso de datos
 
-  static final LatLng _kMapCenter =
-      LatLng(19.018255973653343, 72.84793849278007);
+  static final LatLng _kMapCenter = LatLng(0, 0);
+
   static final CameraPosition _kInitialPosition =
       CameraPosition(target: _kMapCenter, zoom: 11.0, tilt: 0, bearing: 0);
   late GoogleMapController _mapController;
-  Future<String> _dialogAddLongLat() async {
-    await showDialog(
-        context: context,
-        builder: (_) {
-          final controller =
-              TextEditingController(text: "21.157602,-101.6977828,16.22");
-          final _formKey = GlobalKey<FormState>();
-          return AlertDialog(
-            title: Text("Ingresa una Ubicación"),
-            content: CustForm(formKey: _formKey, controller: controller),
-            actionsAlignment: MainAxisAlignment.center,
-            actions: [
-              CustButton(
-                text: "Agregar",
-                onPressed: () async {
-                  print(DirectionsService.apiKey);
-                  directionsService.route(request, (p0, p1) {
-                    if (p1 == DirectionsStatus.ok) {
-                      var pointsFirst = plp.PolylinePoints().decodePolyline(
-                          p0.routes!.first.overviewPolyline!.points!);
-                      print(p0.routes![0].legs!.first.duration?.value);
-                      var point = pointsFirst
-                          .map((e) => LatLng(e.latitude, e.longitude))
-                          .toList();
-                      _polygons.add(Polygon(
-                          geodesic: false,
-                          fillColor: Colors.transparent,
-                          strokeColor: kPrincipal,
-                          polygonId: PolygonId('route'),
-                          points: point..addAll((point.reversed.toList()))));
-                      setState(() {});
-                    } else {
-                      print(p0.errorMessage);
-                      print("hola ${p1} ");
-                    }
-                  });
-                  if (_formKey.currentState!.validate()) {
-                    var latlng = LatLng(
-                        double.tryParse(controller.text.split(',')[0]) ?? 0.0,
-                        double.tryParse(controller.text.split(',')[1]) ?? 0.0);
-                    List<Placemark>? location;
-                    try {
-                      var pruebaRuta = RutaController(
-                          controller: _mapController,
-                          initialPosition: latlng,
-                          sucursales: sucursales);
-                      pruebaRuta.calcRutaCompleta();
-                      location = await placemarkFromCoordinates(
-                          latlng.latitude, latlng.longitude);
-                    } catch (ex) {}
-                    _markers
-                        .add(createMarkerIngresado(context, location, latlng));
-
-                    await _mapController
-                        .animateCamera(CameraUpdate.newLatLng(latlng));
-                    Navigator.pop(context);
-                    setState(() {});
-                  } else {}
-                },
-              )
-            ],
-          );
-        });
-    return "";
-  }
-
   final DirectionsService directionsService = DirectionsService();
   final request = DirectionsRequest(
       origin: GeoCoord(21.154267, -101.6499131),
@@ -144,6 +79,73 @@ class _IndexPageState extends State<IndexPage> {
     return _polygons;
   }
 
+  Future<String> _dialogAddLongLat() async {
+    await showDialog(
+        context: context,
+        builder: (_) {
+          final controller =
+              TextEditingController(text: "21.157602,-101.6977828");
+          final _formKey = GlobalKey<FormState>();
+
+          return AlertDialog(
+            title: Text("Ingresa una Ubicación"),
+            content: CustForm(formKey: _formKey, controller: controller),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              CustButton(
+                text: "Agregar",
+                onPressed: () async {
+                  print(DirectionsService.apiKey);
+                  /*directionsService.route(request, (p0, p1) {
+                    if (p1 == DirectionsStatus.ok) {
+                      var pointsFirst = plp.PolylinePoints().decodePolyline(
+                          p0.routes!.first.overviewPolyline!.points!);
+                      print(p0.routes![0].legs!.first.duration?.value);
+                      var point = pointsFirst
+                          .map((e) => LatLng(e.latitude, e.longitude))
+                          .toList();
+                      _polygons.add(Polygon(
+                          geodesic: false,
+                          fillColor: Colors.transparent,
+                          strokeColor: kPrincipal,
+                          polygonId: PolygonId('route'),
+                          points: point..addAll((point.reversed.toList()))));
+                      setState(() {});
+                    } else {
+                      print(p0.errorMessage);
+                      print("hola ${p1} ");
+                    }
+                  });*/
+                  if (_formKey.currentState!.validate()) {
+                    var latlng = LatLng(
+                        double.tryParse(controller.text.split(',')[0]) ?? 0.0,
+                        double.tryParse(controller.text.split(',')[1]) ?? 0.0);
+                    List<Placemark>? location;
+                    try {
+                      /*var pruebaRuta = RutaController(
+                          controller: _mapController,
+                          initialPosition: latlng,
+                          sucursales: sucursales);
+                      pruebaRuta.calcRutaCompleta();*/
+                      location = await placemarkFromCoordinates(
+                          latlng.latitude, latlng.longitude);
+                    } catch (ex) {}
+                    _markers
+                        .add(createMarkerIngresado(context, location, latlng));
+
+                    await _mapController
+                        .animateCamera(CameraUpdate.newLatLng(latlng));
+                    Navigator.pop(context);
+                    setState(() {});
+                  } else {}
+                },
+              )
+            ],
+          );
+        });
+    return "";
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -154,19 +156,24 @@ class _IndexPageState extends State<IndexPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: Center(
-        child: GoogleMap(
-          onMapCreated: (ctrl) async {
-            _mapController = ctrl;
-            _markers.addAll(addSucursales(sucursales));
-            _polygons.add(await addFirstPolygon(sucursales, _mapController));
-            setState(() {});
-          },
-          markers: _setMarkers(),
-          polygons: _setPolygons(),
-          rotateGesturesEnabled: false,
-          initialCameraPosition: _kInitialPosition,
-        ),
+      body: Column(
+        children: [
+          Center(
+            child: GoogleMap(
+              onMapCreated: (ctrl) async {
+                _mapController = ctrl;
+                _markers.addAll(addSucursales(sucursales));
+                _polygons
+                    .add(await addFirstPolygon(sucursales, _mapController));
+                setState(() {});
+              },
+              markers: _setMarkers(),
+              polygons: _setPolygons(),
+              rotateGesturesEnabled: false,
+              initialCameraPosition: _kInitialPosition,
+            ),
+          ),
+        ],
       ),
 
       floatingActionButton: FloatingActionButton(
