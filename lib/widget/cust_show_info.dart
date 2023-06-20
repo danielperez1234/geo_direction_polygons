@@ -1,18 +1,18 @@
+import 'package:fl_geocoder/fl_geocoder.dart';
 import 'package:flutter/material.dart';
 import 'package:geo_polygons_marks_google/styles.dart';
-import 'package:geocoding/geocoding.dart';
 
 class CustShowInfo extends StatelessWidget {
   CustShowInfo({Key? key, required this.place}) : super(key: key);
-  Placemark place;
+  Result place;
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(place.name ?? ""),
+      title: Text(place.formattedAddress ?? ""),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (place.street != null && place.street != "")
+          if (place.formattedStreet != null && place.formattedStreet != "")
             Row(
               children: [
                 Text(
@@ -20,7 +20,7 @@ class CustShowInfo extends StatelessWidget {
                   style:
                       TextStyle(color: kPrincipal, fontWeight: FontWeight.w700),
                 ),
-                Text(place.street ?? "")
+                Text(place.formattedStreet ?? "")
               ],
             ),
           if (place.country != null && place.country != "")
@@ -31,7 +31,7 @@ class CustShowInfo extends StatelessWidget {
                   style:
                       TextStyle(color: kPrincipal, fontWeight: FontWeight.w700),
                 ),
-                Text(place.country ?? "")
+                Text(place.country?.longName ?? "")
               ],
             ),
           if (place.postalCode != null && place.postalCode != "")
@@ -42,7 +42,7 @@ class CustShowInfo extends StatelessWidget {
                   style:
                       TextStyle(color: kPrincipal, fontWeight: FontWeight.w700),
                 ),
-                Text(place.postalCode ?? "")
+                Text(place.postalCode?.longName ?? "")
               ],
             ),
           if (place.locality != null && place.locality != "")
@@ -53,7 +53,7 @@ class CustShowInfo extends StatelessWidget {
                   style:
                       TextStyle(color: kPrincipal, fontWeight: FontWeight.w700),
                 ),
-                Text(place.locality ?? "")
+                Text(place.locality?.longName ?? "")
               ],
             )
         ],

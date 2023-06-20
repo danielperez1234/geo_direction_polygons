@@ -132,13 +132,10 @@ class _IndexPageState extends State<IndexPage> {
                           ),
                         ),
                       );
-                      location = await placemarkFromCoordinates(
-                          latlng.latitude, latlng.longitude);
                     } catch (ex) {}
                     _markers.removeWhere(
                         (element) => element.mapsId.value == "Mio");
-                    _markers
-                        .add(createMarkerIngresado(context, location, latlng));
+                    _markers.add(await createMarkerIngresado(context, latlng));
 
                     Navigator.pop(context);
 

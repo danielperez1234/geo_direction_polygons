@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:geo_polygons_marks_google/controllador/places_controller.dart';
 import 'package:geo_polygons_marks_google/styles.dart';
 import 'package:geo_polygons_marks_google/widget/cust_show_info.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:fl_geocoder/fl_geocoder.dart' as flGeo;
 
 ///Revisa si esta dentro de las sucursales
 bool estaDentroDelPoligono(List<LatLng> sucursales, LatLng latlng) {
@@ -101,19 +103,21 @@ List<Marker> addSucursales(List<LatLng> sucursales) {
 }
 
 ///Crea el marcador con id ingresado, solo se debe de usar cuando se agrega el marcador ingresado por el usuario
-Marker createMarkerIngresado(
-    BuildContext context, List<Placemark>? location, LatLng latlng) {
+Future<Marker> createMarkerIngresado(
+    BuildContext context, LatLng latlng) async {
+  final locationGeocode =
+      await getPlace(flGeo.Location(latlng.latitude, latlng.longitude));
   return Marker(
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
       infoWindow: InfoWindow(
-          title: location?.first.postalCode ?? "No Info",
+          title: locationGeocode.formattedAddress ?? "No Info",
           onTap: () async {
             print("hola");
-            if (location != null) {
+            if (locationGeocode != null) {
               await showDialog(
                   context: context,
                   builder: (_) => CustShowInfo(
-                        place: location!.first,
+                        place: locationGeocode,
                       ));
             }
           }),
