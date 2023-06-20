@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:geo_polygons_marks_google/controllador/map_functions.dart';
 import 'package:geo_polygons_marks_google/controllador/ruta_controller.dart';
+import 'package:geo_polygons_marks_google/controllador/sucursales_controller.dart';
 import 'package:geo_polygons_marks_google/styles.dart';
 import 'package:geo_polygons_marks_google/widget/cust_button.dart';
 import 'package:geo_polygons_marks_google/widget/cust_form.dart';
@@ -24,9 +25,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.purple,
       ),
       home: const IndexPage(),
     );
@@ -58,21 +60,25 @@ class _IndexPageState extends State<IndexPage> {
     _markers.forEach((element) {
       print(element.mapsId.value);
     });
+
     return _markers;
   }
 
-  var sucursales = [
-    LatLng(21.1351879, -101.7045612),
-    LatLng(21.1560366, -101.689841),
-    LatLng(21.1549216, -101.6854447),
-    LatLng(21.1494391, -101.6823523),
-    LatLng(21.1513765, -101.6721473)
-  ];
+  var sucursales = <LatLng>[];
 
   Set<Polygon> _polygons = {};
 
   _setPolygons() {
     return _polygons;
+  }
+
+  Future<void> _SetMarkers() async {
+    final resList = await getApi();
+    resList.forEach((element) {
+      sucursales
+          .add(LatLng(element.position.latitude, element.position.longitude));
+    });
+    _markers.addAll(resList);
   }
 
   Future<String> _dialogAddLongLat() async {
@@ -165,12 +171,17 @@ class _IndexPageState extends State<IndexPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+          title: Text(
+        "Guruglu Matz",
+        style: TextStyle(fontWeight: FontWeight.w700, color: kWhite),
+      )),
       body: Center(
         child: GoogleMap(
           onMapCreated: (ctrl) async {
             _mapController = ctrl;
-            _markers.addAll(addSucursales(sucursales));
+            _markers.clear();
+            await _SetMarkers();
             _polygons.add(await addFirstPolygon(sucursales, _mapController));
             setState(() {});
           },
