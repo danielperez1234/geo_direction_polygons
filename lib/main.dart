@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart' as plp;
 import 'package:geo_polygons_marks_google/controllador/map_functions.dart';
 import 'package:geo_polygons_marks_google/controllador/ruta_controller.dart';
 import 'package:geo_polygons_marks_google/styles.dart';
@@ -14,7 +13,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  DirectionsService.init('AIzaSyA1teKX_ZHoJRmJZRJdof-fF3uNrQM-u50');
 
   runApp(const MyApp());
 }
@@ -48,20 +46,18 @@ class _IndexPageState extends State<IndexPage> {
   // Funcion para desplegar dialogo de ingreso de datos
 
   static final LatLng _kMapCenter = LatLng(0, 0);
-
+  Widget? mySheet;
   static final CameraPosition _kInitialPosition =
       CameraPosition(target: _kMapCenter, zoom: 11.0, tilt: 0, bearing: 0);
   late GoogleMapController _mapController;
-  final DirectionsService directionsService = DirectionsService();
-  final request = DirectionsRequest(
-      origin: GeoCoord(21.154267, -101.6499131),
-      destination: GeoCoord(21.1578043, -101.7054954),
-      travelMode: TravelMode.driving,
-      optimizeWaypoints: false);
 
   Set<Marker> _markers = {};
 
   Set<Marker> _setMarkers() {
+    print("hola0");
+    _markers.forEach((element) {
+      print(element.mapsId.value);
+    });
     return _markers;
   }
 
@@ -75,7 +71,7 @@ class _IndexPageState extends State<IndexPage> {
 
   Set<Polygon> _polygons = {};
 
-  Set<Polygon> _setPolygons() {
+  _setPolygons() {
     return _polygons;
   }
 
@@ -95,47 +91,53 @@ class _IndexPageState extends State<IndexPage> {
               CustButton(
                 text: "Agregar",
                 onPressed: () async {
-                  print(DirectionsService.apiKey);
-                  /*directionsService.route(request, (p0, p1) {
-                    if (p1 == DirectionsStatus.ok) {
-                      var pointsFirst = plp.PolylinePoints().decodePolyline(
-                          p0.routes!.first.overviewPolyline!.points!);
-                      print(p0.routes![0].legs!.first.duration?.value);
-                      var point = pointsFirst
-                          .map((e) => LatLng(e.latitude, e.longitude))
-                          .toList();
-                      _polygons.add(Polygon(
-                          geodesic: false,
-                          fillColor: Colors.transparent,
-                          strokeColor: kPrincipal,
-                          polygonId: PolygonId('route'),
-                          points: point..addAll((point.reversed.toList()))));
-                      setState(() {});
-                    } else {
-                      print(p0.errorMessage);
-                      print("hola ${p1} ");
-                    }
-                  });*/
                   if (_formKey.currentState!.validate()) {
                     var latlng = LatLng(
                         double.tryParse(controller.text.split(',')[0]) ?? 0.0,
                         double.tryParse(controller.text.split(',')[1]) ?? 0.0);
+                    controller.text = "";
+
+                    if (!estaDentroDelPoligono(sucursales, latlng)) {
+                      controller.text = "Fuera de rango";
+                      return;
+                    }
                     List<Placemark>? location;
                     try {
-                      /*var pruebaRuta = RutaController(
+                      var pruebaRuta = RutaController(
                           controller: _mapController,
                           initialPosition: latlng,
                           sucursales: sucursales);
-                      pruebaRuta.calcRutaCompleta();*/
+                      _polygons.removeWhere(
+                          (element) => element.mapsId.value == "route");
+                      var resrute = (await pruebaRuta.calcRutaCompleta());
+                      _polygons.add(resrute["polygon"]);
+                      mySheet = Container(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height / 3,
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(25))),
+                        child: Center(
+                          child: Text(
+                            "Tiempo de viaje ${resrute["duration"].toString()} min.",
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
                       location = await placemarkFromCoordinates(
                           latlng.latitude, latlng.longitude);
                     } catch (ex) {}
+                    _markers.removeWhere(
+                        (element) => element.mapsId.value == "Mio");
                     _markers
                         .add(createMarkerIngresado(context, location, latlng));
 
-                    await _mapController
-                        .animateCamera(CameraUpdate.newLatLng(latlng));
                     Navigator.pop(context);
+
+                    showModalBottomSheet(
+                        context: context, builder: (builder) => mySheet!);
                     setState(() {});
                   } else {}
                 },
@@ -144,6 +146,14 @@ class _IndexPageState extends State<IndexPage> {
           );
         });
     return "";
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    // TODO: implement setState
+    _setMarkers.call();
+    _setPolygons.call();
+    super.setState(fn);
   }
 
   @override
@@ -156,26 +166,37 @@ class _IndexPageState extends State<IndexPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: Column(
-        children: [
-          Center(
-            child: GoogleMap(
-              onMapCreated: (ctrl) async {
-                _mapController = ctrl;
-                _markers.addAll(addSucursales(sucursales));
-                _polygons
-                    .add(await addFirstPolygon(sucursales, _mapController));
-                setState(() {});
-              },
-              markers: _setMarkers(),
-              polygons: _setPolygons(),
-              rotateGesturesEnabled: false,
-              initialCameraPosition: _kInitialPosition,
-            ),
-          ),
-        ],
+      body: Center(
+        child: GoogleMap(
+          onMapCreated: (ctrl) async {
+            _mapController = ctrl;
+            _markers.addAll(addSucursales(sucursales));
+            _polygons.add(await addFirstPolygon(sucursales, _mapController));
+            setState(() {});
+          },
+          markers: _setMarkers(),
+          polygons: _setPolygons(),
+          rotateGesturesEnabled: false,
+          initialCameraPosition: _kInitialPosition,
+        ),
       ),
-
+      bottomNavigationBar: mySheet != null
+          ? GestureDetector(
+              onVerticalDragEnd: (x) {
+                showModalBottomSheet(
+                    context: context, builder: (builder) => mySheet!);
+              },
+              child: Container(
+                color: Colors.white,
+                height: 20,
+                child: Center(
+                    child: Text(
+                  "=",
+                  style: TextStyle(color: Colors.grey),
+                )),
+              ),
+            )
+          : null,
       floatingActionButton: FloatingActionButton(
         backgroundColor: kPrincipal,
         onPressed: _dialogAddLongLat,
