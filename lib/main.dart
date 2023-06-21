@@ -83,6 +83,7 @@ class _IndexPageState extends State<IndexPage> {
 
   Future<String> _dialogAddLongLat() async {
     await showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (_) {
           final controller =

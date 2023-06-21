@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geo_polygons_marks_google/controllador/places_controller.dart';
 import 'package:geo_polygons_marks_google/styles.dart';
 import 'package:geo_polygons_marks_google/widget/cust_show_info.dart';
@@ -88,14 +89,19 @@ Future<Polygon> addFirstPolygon(
 }
 
 ///Crear marcador sucursales
-List<Marker> addSucursales(List<LatLng> sucursales) {
+///YA NO SE USA----------------------------------------
+Future<List<Marker>> addSucursales(List<LatLng> sucursales) async {
   List<Marker> list = [];
-  sucursales.forEach((element) {
+  var img = await rootBundle.load("assets/ubicacion.png");
+  var fimg = img.buffer.asUint8List();
+  sucursales.map((element) {
     list.add(Marker(
         markerId: MarkerId("sucursale${sucursales.indexOf(element)}"),
         position: element,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor
-            .hueViolet) /*await BitmapDescriptor.fromAssetImage(
+        icon: BitmapDescriptor.fromBytes(fimg,
+            size: Size(25,
+                25)) /*BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor
+            .hueViolet) */ /*await BitmapDescriptor.fromAssetImage(
             ImageConfiguration(size: Size(30, 30)), "assets/ubicacion.png")*/
         ));
   });
